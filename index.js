@@ -4,6 +4,8 @@ var sub = require('subleveldown')
 var randombytes = require('randombytes')
 var once = require('once')
 var symgroup = require('symmetric-protocol-group')
+var hyperkdb = require('hyperlog-kdb-index')
+var kdbtree = require('kdb-tree-store')
 
 var CORE = 'c', KV = 'k'
 var KEYS = {
@@ -12,16 +14,43 @@ var KEYS = {
   lon: ['location','lon'],
   lat: ['location','lat']
 }
+function getkey (obj, keys) {
+  keys.forEach(function (key) {
+    if (obj) obj = obj[key]
+  })
+  return obj
+}
 
 module.exports = Monitor
 
 function Monitor (opts) {
+  var self = this
   if (!(this instanceof Monitor)) return new Monitor(opts)
   this.log = opts.log
   this.kv = hyperkv({
     db: sub(opts.db, KV),
     log: this.log
   })
+  this.kdb = hyperkdb({
+    log: this.log,
+    types: [ 'float', 'float' ],
+    kdbtree: kdbtree,
+    store: opts.store,
+    map: function (row) {
+      if (!row.value) return
+      var lon = getkey(row.value.v, KEYS.lon)
+      if (lon === undefined) return
+      var lat = getkey(row.value.v, KEYS.lat)
+      if (lat === undefined) return
+      if (row.value.k) {
+        return { type: 'put', point: ptf({ lat: lat, lon: lon }) }
+      } else if (row.value.d && row.value.points) {
+        return { type: 'del', points: row.value.points.map(ptf) }
+      }
+      function ptf (x) { return [ x.lat, x.lon ] }
+    }
+  })
+  this.kdb.on('error', function (err) { self.emit('error', err) })
   this.core = hypercore(sub(opts.db, CORE))
 }
 
@@ -52,9 +81,11 @@ Monitor.prototype.replicate = function (opts) {
 }
 
 Monitor.prototype.query = function (bbox) {
+  return this.kdb.query(bbox)
 }
 
 Monitor.prototype.geojson = function (bbox) {
+  // todo
 }
 
 function noop () {}
