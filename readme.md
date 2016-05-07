@@ -1,6 +1,6 @@
 # monitor-db (provisional name)
 
-p2p database for field observations
+p2p database for monitoring observations
 
 Collect reports and media and sync with peers offline.
 
