@@ -6,8 +6,9 @@ var once = require('once')
 var symgroup = require('symmetric-protocol-group')
 var hyperkdb = require('hyperlog-kdb-index')
 var kdbtree = require('kdb-tree-store')
+var Report = require('./lib/report.js')
 
-var CORE = 'c', KV = 'k'
+var CORE = 'c', KV = 'k', KDB = 'h'
 var KEYS = {
   start: ['start'],
   end: ['end'],
@@ -33,6 +34,7 @@ function Monitor (opts) {
   })
   this.kdb = hyperkdb({
     log: this.log,
+    db: sub(opts.db, KDB),
     types: [ 'float', 'float' ],
     kdbtree: kdbtree,
     store: opts.store,
@@ -64,7 +66,11 @@ Monitor.prototype.create = function (doc) {
     self.kv.put(id, {
       report: doc,
       files: report.files
-    }, next)
+    }, onput)
+    function onput (err) {
+      if (err) next(err)
+      else next(null, id)
+    }
   })
   return report
 }
