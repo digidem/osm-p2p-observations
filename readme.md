@@ -44,3 +44,10 @@ report.commit(function (err, id) {
 })
 ```
 
+adding a record:
+
+```
+$ node create.js '{"location":{"lat":64.5,"lon":-147.9},"type":"wildlife","comment":"moose with
+calf"}' --files moose.jpg
+```
+
