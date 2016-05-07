@@ -31,12 +31,10 @@ var files = [].concat(argv.files)
 
 var report = monitor.create(doc)
 files.forEach(function (file) {
-  fs.stat(file, function (err, stat) {
-    if (err) return console.error(err)
-    report.attach(fs.createReadStream(file), {
-      name: path.basename(file),
-      date: stat.ctime
-    })
+  var stat = fs.statSync(file)
+  report.attach(fs.createReadStream(file), {
+    name: path.basename(file),
+    date: stat.ctime
   })
 })
 
