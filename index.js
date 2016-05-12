@@ -1,97 +1,73 @@
-var hypercore = require('hypercore')
-var hyperkv = require('hyperkv')
+var join = require('hyperlog-join')
 var sub = require('subleveldown')
-var randombytes = require('randombytes')
-var once = require('once')
-var symgroup = require('symmetric-protocol-group')
-var hyperkdb = require('hyperlog-kdb-index')
-var kdbtree = require('kdb-tree-store')
-var Report = require('./lib/report.js')
+var hprefix = require('hyperdrive-prefix')
+var hyperdrive = require('hyperdrive')
+var inherits = require('inherits')
+var EventEmitter = require('events').EventEmitter
 
-var CORE = 'c', KV = 'k', KDB = 'h'
-var KEYS = {
-  start: ['start'],
-  end: ['end'],
-  lon: ['location','lon'],
-  lat: ['location','lat']
-}
-function getkey (obj, keys) {
-  keys.forEach(function (key) {
-    if (obj) obj = obj[key]
-  })
-  return obj
-}
+module.exports = Obs
+inherits(Obs, EventEmitter)
 
-module.exports = Monitor
+var REF = 'r', DRIVE = 'd', INFO = 'i'
 
-function Monitor (opts) {
+function Obs (opts) {
   var self = this
-  if (!(this instanceof Monitor)) return new Monitor(opts)
-  this.log = opts.log
-  this.kv = hyperkv({
-    db: sub(opts.db, KV),
-    log: this.log
-  })
-  this.kdb = hyperkdb({
-    log: this.log,
-    db: sub(opts.db, KDB),
-    types: [ 'float', 'float' ],
-    kdbtree: kdbtree,
-    store: opts.store,
+  if (!(self instanceof Obs)) return new Obs(opts)
+  self.indexes = {}
+  self.indexes.ref = join({
+    log: opts.log,
+    db: sub(opts.db, REF),
     map: function (row) {
-      if (!row.value) return
-      var lon = getkey(row.value.v, KEYS.lon)
-      if (lon === undefined) return
-      var lat = getkey(row.value.v, KEYS.lat)
-      if (lat === undefined) return
-      if (row.value.k) {
-        return { type: 'put', point: ptf({ lat: lat, lon: lon }) }
-      } else if (row.value.d && row.value.points) {
-        return { type: 'del', points: row.value.points.map(ptf) }
-      }
-      function ptf (x) { return [ x.lat, x.lon ] }
+      var v = row.value && row.value.v
+      if (!v || v.type !== 'observation' || !v.ref) return
+      return { type: 'put', key: v.ref, value: 0 }
     }
   })
-  this.kdb.on('error', function (err) { self.emit('error', err) })
-  this.core = hypercore(sub(opts.db, CORE))
-}
-
-Monitor.prototype.create = function (doc) {
-  var self = this
-  var report = new Report(doc, {
-    core: self.core
-  })
-  report.once('commit', function (next) {
-    var id = randombytes(8).toString('hex')
-    self.kv.put(id, {
-      report: doc,
-      files: report.files
-    }, onput)
-    function onput (err) {
-      if (err) next(err)
-      else next(null, id)
+  self.drive = hyperdrive(sub(opts.db, DRIVE))
+  self.db = sub(opts.db, INFO, { valueEncoding: 'buffer' })
+  self.db.get('link', function (err, link) {
+    if (err) return self.emit('error')
+    else if (link) {
+      self.link = link
+      return self.emit('link', link)
     }
+    var archive = self.createArchive()
+    archive.finalize(function () {
+      self.db.put('link', archive.key, function (err) {
+        if (err) return self.emit('error')
+        self.link = archive.key
+        self.emit('link', archive.key)
+      })
+    })
   })
-  return report
 }
 
-Monitor.prototype.get = function (id, cb) {
-  this.kv.get(id, cb)
+Obs.prototype._getArchive = function (fn) {
+  if (this.link) onlink.call(this, this.link)
+  else self.once('link', onlink)
+  function onlink (link) { fn(this.drive.createArchive(link)) }
 }
 
-Monitor.prototype.replicate = function (opts) {
+Obs.prototype.open = function (obsid) {
+  var cursor = hprefix(String(obsid))
+  this._getArchive(function (archive) {
+    cursor.setArchive(archive)
+  })
+  return cursor
+}
+
+Obs.prototype.list = function (refid, cb) {
+  return this.indexes.ref.list(refid, cb)
+}
+
+Obs.prototype.replicate = function (opts) {
   return symgroup({
     core: this.core.replicate(opts),
     log: this.log.replicate(opts)
   })
 }
 
-Monitor.prototype.query = function (bbox) {
-  return this.kdb.query(bbox)
-}
-
-Monitor.prototype.geojson = function (bbox) {
-  // todo
-}
-
 function noop () {}
+function notfound (err) {
+  return err && (/^notfound/i.test(err.message) || err.notFound)
+}
