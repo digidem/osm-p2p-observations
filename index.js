@@ -4,6 +4,7 @@ var hprefix = require('hyperdrive-prefix')
 var hyperdrive = require('hyperdrive')
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
+var hex2dec = require('./lib/hex2dec.js')
 
 module.exports = Obs
 inherits(Obs, EventEmitter)
@@ -49,7 +50,9 @@ Obs.prototype._getArchive = function (fn) {
 }
 
 Obs.prototype.open = function (obsid) {
+  if (!obsid) obsid = hex2dec(randombytes(8).toString('hex'))
   var cursor = hprefix(String(obsid))
+  cursor.id = obsid
   this._getArchive(function (archive) {
     cursor.setArchive(archive)
   })
@@ -62,8 +65,7 @@ Obs.prototype.list = function (refid, cb) {
 
 Obs.prototype.replicate = function (opts) {
   return symgroup({
-    core: this.core.replicate(opts),
-    log: this.log.replicate(opts)
+    drive: this.drive.replicate(opts)
   })
 }
 
