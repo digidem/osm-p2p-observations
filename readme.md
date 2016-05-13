@@ -1,4 +1,4 @@
-# monitor-db (provisional name)
+# osm-p2p-observations
 
 p2p database for monitoring observations
 
@@ -7,47 +7,67 @@ Collect reports and media and sync with peers offline.
 # example
 
 ``` js
-var monitordb = require('monitor-db')
-var level = require('level')
-var fdstore = require('fd-chunk-store')
-var hyperlog = require('hyperlog')
-
-var path = require('path')
 var fs = require('fs')
 
-var minimist = require('minimist')
-var argv = minimist(process.argv.slice(2), {
-  alias: { f: [ 'file', 'files' ] }
-})
+var osmdb = require('osm-p2p')
+var osm = osmdb('/tmp/osm.db')
 
-var monitor = monitordb({
-  log: hyperlog(level('/tmp/monitor.log'), { valueEncoding: 'json' }),
-  db: level('/tmp/monitor.db'),
-  store: fdstore(1024, '/tmp/monitor.store')
-})
+var level = require('level')
+var db = level('/tmp/osm-obs.db')
+var obs = require('osm-p2p-observations')({ db: db, log: osm.log })
 
-var doc = JSON.parse(argv._[0])
-var files = [].concat(argv.files)
+var evdoc = {
+  type: 'event',
+  category: 'oil spill',
+  date: '2016-05-30'
+}
+osm.create(evdoc, function (err, key, node) {
+  var c0 = obs.open()
+  fs.createReadStream('DSC_102931.jpg')
+    .pipe(c0.createFileWriteStream())
+  c0.finalize(function () {
+    var doc = {
+      type: 'observation',
+      id: c.id,
+      link: key,
+      caption: 'pipeline break',
+      category: 'contamination',
+      media: 'DSC_102931.jpg',
+      mediaType: 'photo'
+    }
+    osm.create(doc)
+  })
 
-var report = monitor.create(doc)
-files.forEach(function (file) {
-  var stat = fs.statSync(file)
-  report.attach(fs.createReadStream(file), {
-    name: path.basename(file),
-    date: stat.ctime
+  var c1 = obs.open()
+  fs.createReadStream('DSC_102932.jpg')
+    .pipe(c1.createFileWriteStream())
+  c1.finalize(function () {
+    var doc = {
+      type: 'observation',
+      id: c.id,
+      link: key,
+      caption: 'oil in the river',
+      category: 'contamination',
+      media: 'DSC_102932.jpg',
+      mediaType: 'photo'
+    }
+    osm.create(doc, function (err, key, node) {})
+  })
+
+  var c2 = obs.open()
+  fs.createReadStream('audiofile1.wav')
+    .pipe(c2.createFileWriteStream())
+  c2.finalize(function () {
+    var doc = {
+      type: 'observation',
+      id: c.id,
+      link: key,
+      caption: 'interview with uncle simon',
+      category: 'testimony',
+      media: 'audiofile1.wav',
+      mediaType: 'audio'
+    }
+    osm.create(doc, function (err, key, node) {})
   })
 })
-
-report.commit(function (err, id) {
-  if (err) console.error(err)
-  else console.log(id)
-})
 ```
-
-adding a record:
-
-```
-$ node create.js '{"location":{"lat":64.5,"lon":-147.9},"type":"wildlife","comment":"moose with
-calf"}' --files moose.jpg
-```
-
