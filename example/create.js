@@ -15,7 +15,7 @@ var evdoc = {
 osm.create(evdoc, function (err, key, node) {
   var c0 = obs.open()
   fs.createReadStream('DSC_102931.jpg')
-    .pipe(c0.createFileWriteStream())
+    .pipe(c0.createFileWriteStream('DSC_102931.jpg'))
   c0.finalize(function () {
     var doc = {
       type: 'observation',
@@ -31,7 +31,7 @@ osm.create(evdoc, function (err, key, node) {
 
   var c1 = obs.open()
   fs.createReadStream('DSC_102932.jpg')
-    .pipe(c1.createFileWriteStream())
+    .pipe(c1.createFileWriteStream('DSC_102932.jpg'))
   c1.finalize(function () {
     var doc = {
       type: 'observation',

@@ -5,6 +5,7 @@ var hyperdrive = require('hyperdrive')
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
 var hex2dec = require('./lib/hex2dec.js')
+var randombytes = require('randombytes')
 
 module.exports = Obs
 inherits(Obs, EventEmitter)
@@ -27,12 +28,12 @@ function Obs (opts) {
   self.drive = hyperdrive(sub(opts.db, DRIVE))
   self.db = sub(opts.db, INFO, { valueEncoding: 'buffer' })
   self.db.get('link', function (err, link) {
-    if (err) return self.emit('error')
+    if (err && !notfound(err)) return self.emit('error', err)
     else if (link) {
       self.link = link
       return self.emit('link', link)
     }
-    var archive = self.createArchive()
+    var archive = self.drive.createArchive()
     archive.finalize(function () {
       self.db.put('link', archive.key, function (err) {
         if (err) return self.emit('error')
