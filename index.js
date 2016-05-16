@@ -54,7 +54,13 @@ Obs.prototype.open = function (obsid) {
   if (!obsid) obsid = hex2dec(randombytes(8).toString('hex'))
   var cursor = hprefix(String(obsid))
   cursor.id = obsid
+
+  var finalize = false
+  cursor.finalize = function () { finalize = true }
+
   this._getArchive(function (archive) {
+    if (finalize) archive.finalize()
+    cursor.finalize = function () { archive.finalize() }
     cursor.setArchive(archive)
   })
   return cursor

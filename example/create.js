@@ -47,7 +47,7 @@ osm.create(evdoc, function (err, key, node) {
 
   var c2 = obs.open()
   fs.createReadStream('audiofile1.wav')
-    .pipe(c2.createFileWriteStream())
+    .pipe(c2.createFileWriteStream('audiofile1.wav'))
   c2.finalize(function () {
     var doc = {
       type: 'observation',
