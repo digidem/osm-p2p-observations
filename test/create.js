@@ -15,7 +15,8 @@ test('create', function (t) {
   t.plan(6)
   var osm = osmdb(tmpdir)
   var obs = OBS({ db: memdb(), log: osm.log })
-  var linkKey
+  var eventKey
+  var obsdocs = []
 
   var evdoc = {
     type: 'event',
@@ -24,7 +25,7 @@ test('create', function (t) {
   }
   osm.create(evdoc, function (err, key, node) {
     t.error(err)
-    linkKey = key
+    eventKey = key
     var pending = 3
     var c0 = obs.open()
     fs.createReadStream(dir('DSC_102931.jpg'))
@@ -39,6 +40,7 @@ test('create', function (t) {
         media: 'DSC_102931.jpg',
         mediaType: 'photo'
       }
+      obsdocs.push(doc)
       osm.create(doc, function (err, xkey, xnode) {
         t.error(err)
         if (--pending === 0) done()
@@ -58,6 +60,7 @@ test('create', function (t) {
         media: 'DSC_102932.jpg',
         mediaType: 'photo'
       }
+      obsdocs.push(doc)
       osm.create(doc, function (err, xkey, xnode) {
         t.error(err)
         if (--pending === 0) done()
@@ -77,6 +80,7 @@ test('create', function (t) {
         media: 'audiofile1.wav',
         mediaType: 'audio'
       }
+      obsdocs.push(doc)
       osm.create(doc, function (err, xkey, xnode) {
         t.error(err)
         if (--pending === 0) done()
@@ -85,9 +89,10 @@ test('create', function (t) {
   })
 
   function done () {
-    obs.list(linkKey, function (err, keys) {
+    obs.list(eventKey, function (err, keys) {
       t.error(err)
-      t.equal(keys.length, 3)
+      t.deepEqual(keys.sort(cmp), obsdocs.sort(cmp), 'expected observations')
     })
   }
+  function cmp (a, b) { return a.id < b.id ? -1 : 1 }
 })
