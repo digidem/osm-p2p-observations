@@ -19,14 +19,18 @@ osm.create(evdoc, function (err, key, node) {
   c0.finalize(function () {
     var doc = {
       type: 'observation',
-      id: c.id,
+      id: c0.id,
       link: key,
       caption: 'pipeline break',
       category: 'contamination',
       media: 'DSC_102931.jpg',
       mediaType: 'photo'
     }
-    osm.create(doc)
+    osm.create(doc, function (err, key, node) {
+      obs.list(c0.id, function (err, keys) {
+        console.log(keys)
+      })
+    })
   })
 
   var c1 = obs.open()
@@ -35,7 +39,7 @@ osm.create(evdoc, function (err, key, node) {
   c1.finalize(function () {
     var doc = {
       type: 'observation',
-      id: c.id,
+      id: c1.id,
       link: key,
       caption: 'oil in the river',
       category: 'contamination',
@@ -51,7 +55,7 @@ osm.create(evdoc, function (err, key, node) {
   c2.finalize(function () {
     var doc = {
       type: 'observation',
-      id: c.id,
+      id: c2.id,
       link: key,
       caption: 'interview with uncle simon',
       category: 'testimony',
