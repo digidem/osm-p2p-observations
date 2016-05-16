@@ -26,7 +26,7 @@ function Obs (opts) {
     }
   })
   self.drive = hyperdrive(sub(opts.db, DRIVE))
-  self.db = sub(opts.db, INFO, { valueEncoding: 'buffer' })
+  self.db = sub(opts.db, INFO, { valueEncoding: 'binary' })
   self.db.get('link', function (err, link) {
     if (err && !notfound(err)) return self.emit('error', err)
     else if (link) {
