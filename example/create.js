@@ -13,6 +13,7 @@ var evdoc = {
   date: '2016-05-30'
 }
 osm.create(evdoc, function (err, key, node) {
+  var pending = 3
   var c0 = obs.open()
   fs.createReadStream('DSC_102931.jpg')
     .pipe(c0.createFileWriteStream('DSC_102931.jpg'))
@@ -27,13 +28,10 @@ osm.create(evdoc, function (err, key, node) {
       mediaType: 'photo'
     }
     osm.create(doc, function (err, xkey, xnode) {
-      obs.list(key, function (err, keys) {
-        console.log(keys)
-      })
+      if (--pending === 0) done()
     })
   })
 
-/*
   var c1 = obs.open()
   fs.createReadStream('DSC_102932.jpg')
     .pipe(c1.createFileWriteStream('DSC_102932.jpg'))
@@ -47,7 +45,9 @@ osm.create(evdoc, function (err, key, node) {
       media: 'DSC_102932.jpg',
       mediaType: 'photo'
     }
-    osm.create(doc, function (err, key, node) {})
+    osm.create(doc, function (err, xkey, xnode) {
+      if (--pending === 0) done()
+    })
   })
 
   var c2 = obs.open()
@@ -63,7 +63,14 @@ osm.create(evdoc, function (err, key, node) {
       media: 'audiofile1.wav',
       mediaType: 'audio'
     }
-    osm.create(doc, function (err, key, node) {})
+    osm.create(doc, function (err, xkey, xnode) {
+      if (--pending === 0) done()
+    })
   })
-  */
+
+  function done () {
+    obs.list(key, function (err, keys) {
+      console.log(keys)
+    })
+  }
 })
