@@ -10,7 +10,7 @@ var db = level('/tmp/osm-obs.db')
 var osm = osmdb('/tmp/osm.db')
 var obs = obsdb({ db: db, log: osm.log })
 
-var argv = minimist(process.argv.slice(2))
+var argv = minimist(process.argv.slice(2), { string: [ '_' ] })
 
 var evkey = argv._[0]
 var cursor = obs.open()

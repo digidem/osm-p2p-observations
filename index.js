@@ -50,7 +50,7 @@ function Obs (opts) {
 
 Obs.prototype._getArchive = function (fn) {
   if (this.link) onlink.call(this, this.link)
-  else self.once('link', onlink)
+  else this.once('link', onlink)
   function onlink (link) { fn(this.drive.createArchive(link)) }
 }
 
