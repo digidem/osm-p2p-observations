@@ -21,8 +21,8 @@ function Obs (opts) {
     db: sub(opts.db, REF),
     map: function (row) {
       var v = row.value && row.value.v
-      if (!v || v.type !== 'observation' || !v.ref) return
-      return { type: 'put', key: v.ref, value: 0 }
+      if (!v || v.type !== 'observation' || !v.link) return
+      return { type: 'put', key: v.link, value: 0 }
     }
   })
   self.drive = hyperdrive(sub(opts.db, DRIVE))

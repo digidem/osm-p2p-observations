@@ -26,13 +26,14 @@ osm.create(evdoc, function (err, key, node) {
       media: 'DSC_102931.jpg',
       mediaType: 'photo'
     }
-    osm.create(doc, function (err, key, node) {
-      obs.list(c0.id, function (err, keys) {
+    osm.create(doc, function (err, xkey, xnode) {
+      obs.list(key, function (err, keys) {
         console.log(keys)
       })
     })
   })
 
+/*
   var c1 = obs.open()
   fs.createReadStream('DSC_102932.jpg')
     .pipe(c1.createFileWriteStream('DSC_102932.jpg'))
@@ -64,4 +65,5 @@ osm.create(evdoc, function (err, key, node) {
     }
     osm.create(doc, function (err, key, node) {})
   })
+  */
 })
