@@ -6,68 +6,107 @@ Collect reports and media and sync with peers offline.
 
 # example
 
-``` js
-var fs = require('fs')
+create an event:
 
+``` js
 var osmdb = require('osm-p2p')
-var osm = osmdb('/tmp/osm.db')
+var strftime = require('strftime')
 
 var level = require('level')
 var db = level('/tmp/osm-obs.db')
-var obs = require('osm-p2p-observations')({ db: db, log: osm.log })
 
-var evdoc = {
+var osm = osmdb('/tmp/osm.db')
+
+var doc = {
   type: 'event',
-  category: 'oil spill',
-  date: '2016-05-30'
+  category: process.argv[3],
+  date: strftime('%F', new Date)
 }
-osm.create(evdoc, function (err, key, node) {
-  var c0 = obs.open()
-  fs.createReadStream('DSC_102931.jpg')
-    .pipe(c0.createFileWriteStream())
-  c0.finalize(function () {
-    var doc = {
-      type: 'observation',
-      id: c.id,
-      link: key,
-      caption: 'pipeline break',
-      category: 'contamination',
-      media: 'DSC_102931.jpg',
-      mediaType: 'photo'
-    }
-    osm.create(doc)
-  })
+osm.create(doc, function (err, key, node) {
+  if (err) console.error(err)
+  else console.log(key)
+})
+```
 
-  var c1 = obs.open()
-  fs.createReadStream('DSC_102932.jpg')
-    .pipe(c1.createFileWriteStream())
-  c1.finalize(function () {
-    var doc = {
-      type: 'observation',
-      id: c.id,
-      link: key,
-      caption: 'oil in the river',
-      category: 'contamination',
-      media: 'DSC_102932.jpg',
-      mediaType: 'photo'
-    }
-    osm.create(doc, function (err, key, node) {})
-  })
+```
+$ node create-obs.js 3665882078939613349 --caption='pipeline break' \
+  --category=contamination --media=DSC_102931.jpg --mediaType=photo
+2549835612660169035
+```
 
-  var c2 = obs.open()
-  fs.createReadStream('audiofile1.wav')
-    .pipe(c2.createFileWriteStream())
-  c2.finalize(function () {
-    var doc = {
-      type: 'observation',
-      id: c.id,
-      link: key,
-      caption: 'interview with uncle simon',
-      category: 'testimony',
-      media: 'audiofile1.wav',
-      mediaType: 'audio'
-    }
-    osm.create(doc, function (err, key, node) {})
+create observations that link to the event:
+
+``` js
+var osmdb = require('osm-p2p')
+var obsdb = require('osm-p2p-observation')
+var fs = require('fs')
+var path = require('path')
+var minimist = require('minimist')
+
+var level = require('level')
+var db = level('/tmp/osm-obs.db')
+
+var osm = osmdb('/tmp/osm.db')
+var obs = obsdb({ db: db, log: osm.log })
+
+var argv = minimist(process.argv.slice(2), { string: [ '_' ] })
+
+var evkey = argv._[0]
+var cursor = obs.open()
+var doc = {
+  type: 'observation',
+  id: cursor.id,
+  link: evkey,
+  caption: argv.caption,
+  category: argv.category,
+  media: path.basename(argv.media),
+  mediaType: argv.mediaType
+}
+
+fs.createReadStream(argv.media)
+  .pipe(cursor.createFileWriteStream(argv.media))
+
+cursor.finalize(function () {
+  osm.create(doc, function (err, key, node) {
+    if (err) console.error(err)
+    else console.log(cursor.id)
   })
 })
 ```
+
+```
+$ node create-obs.js 3665882078939613349 --caption='oil in the river' \
+  --category=contamination --media=DSC_102932.jpg --mediaType=photo
+...
+$ node create-obs.js 12076445846598008460 --caption='pipeline break' \
+  --category=contamination --media=DSC_102931.jpg --mediaType=photo
+...
+```
+
+# api
+
+``` js
+var obsdb = require('osm-p2p-observations')
+```
+
+## var obs = obsdb(opts)
+
+Create an `obs` instance from:
+
+* `opts.log` - a hyperlog instance from an osm-p2p-db
+* `opts.db` - a leveldb database
+
+## var archive = obs.open(obsid)
+
+Open a hyperdrive `archive`, optionally with an `obsid`.
+Otherwise, an `obsid` is generated and can be read as `archive.id`.
+
+## var stream = obs.list(evkey, cb)
+
+Return a readable `stream` of documents that link to `evkey` or collect the
+documents into `cb(err, docs)`.
+
+## var stream = obs.replicate()
+
+Return a duplex `stream` for replication.
+
