@@ -4,6 +4,12 @@ media layer to record monitoring observations for [osm-p2p][1]
 
 [1]: https://github.com/digidem/osm-p2p
 
+# stability
+
+We're still figuring out the requirements upstream of this API, so we may make
+more breaking changes in the near term, but we will respect semver by
+incrementing the major version for each update.
+
 # example
 
 create an event:
