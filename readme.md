@@ -106,6 +106,43 @@ obs.list(process.argv[2], function (err, docs) {
 })
 ```
 
+---
+
+list the media files attached to an observation:
+
+``` js
+var osmdb = require('osm-p2p')
+var obsdb = require('osm-p2p-observations')
+var level = require('level')
+var db = level('/tmp/osm-obs.db')
+
+var osm = osmdb('/tmp/osm.db')
+var obs = obsdb({ db: db, log: osm.log })
+
+var archive = obs.open(process.argv[2])
+archive.list().on('data', function (entry) {
+  console.log(entry.name)
+})
+```
+
+---
+
+read the file contents of a media file from an observation:
+
+```
+var osmdb = require('osm-p2p')
+var obsdb = require('osm-p2p-observations')
+var level = require('level')
+var db = level('/tmp/osm-obs.db')
+
+var osm = osmdb('/tmp/osm.db')
+var obs = obsdb({ db: db, log: osm.log })
+
+var archive = obs.open(process.argv[2])
+archive.createFileReadStream(process.argv[3])
+  .pipe(process.stdout)
+```
+
 # api
 
 ``` js
@@ -121,8 +158,10 @@ Create an `obs` instance from:
 
 ## var archive = obs.open(obsid)
 
-Open a hyperdrive `archive`, optionally with an `obsid`.
+Open a [hyperdrive][2] `archive`, optionally with an `obsid`.
 Otherwise, an `obsid` is generated and can be read as `archive.id`.
+
+[2]: https://npmjs.com/package/hyperdrive
 
 ## var stream = obs.list(evkey, cb)
 
