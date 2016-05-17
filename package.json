@@ -1,7 +1,7 @@
 {
   "name": "osm-p2p-observations",
   "version": "1.0.0",
-  "description": "p2p database for monitoring observations",
+  "description": "media layer to record monitoring observations for osm-p2p",
   "main": "index.js",
   "dependencies": {
     "base-convertor": "^1.1.0",
