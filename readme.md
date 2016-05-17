@@ -1,8 +1,8 @@
 # osm-p2p-observations
 
-p2p database for monitoring observations
+media layer to record monitoring observations for [osm-p2p][1]
 
-Collect reports and media and sync with peers offline.
+[1]: https://github.com/digidem/osm-p2p
 
 # example
 
@@ -133,3 +133,12 @@ documents into `cb(err, docs)`.
 
 Return a duplex `stream` for replication.
 
+# install
+
+```
+npm install osm-p2p-observations
+```
+
+# license
+
+MIT
