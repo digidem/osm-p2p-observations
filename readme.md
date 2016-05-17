@@ -10,17 +10,21 @@ create an event:
 
 ``` js
 var osmdb = require('osm-p2p')
+var level = require('level')
 var strftime = require('strftime')
 
-var level = require('level')
 var db = level('/tmp/osm-obs.db')
-
 var osm = osmdb('/tmp/osm.db')
 
 var doc = {
-  type: 'event',
-  category: process.argv[3],
-  date: strftime('%F', new Date)
+  type: 'node',
+  lon: Number(process.argv[2]),
+  lat: Number(process.argv[3]),
+  tags: {
+    category: process.argv[4],
+    date: strftime('%F', new Date),
+    type: 'event'
+  }
 }
 osm.create(doc, function (err, key, node) {
   if (err) console.error(err)
@@ -29,10 +33,11 @@ osm.create(doc, function (err, key, node) {
 ```
 
 ```
-$ node create-obs.js 3665882078939613349 --caption='pipeline break' \
-  --category=contamination --media=DSC_102931.jpg --mediaType=photo
+$ node create-event.js -147.9 64.5 'oil spill'
 2549835612660169035
 ```
+
+---
 
 create observations that link to the event:
 
@@ -75,12 +80,30 @@ cursor.finalize(function () {
 ```
 
 ```
-$ node create-obs.js 3665882078939613349 --caption='oil in the river' \
+$ node create-obs.js 2549835612660169035 --caption='oil in the river' \
   --category=contamination --media=DSC_102932.jpg --mediaType=photo
-...
-$ node create-obs.js 12076445846598008460 --caption='pipeline break' \
+3816383091836550097
+$ node create-obs.js 2549835612660169035 --caption='pipeline break' \
   --category=contamination --media=DSC_102931.jpg --mediaType=photo
-...
+7719235301294729118
+```
+
+---
+
+list the observations associated with an event:
+
+``` js
+var osmdb = require('osm-p2p')
+var obsdb = require('osm-p2p-observations')
+var level = require('level')
+var db = level('/tmp/osm-obs.db')
+
+var osm = osmdb('/tmp/osm.db')
+var obs = obsdb({ db: db, log: osm.log })
+
+obs.list(process.argv[2], function (err, docs) {
+  console.log(docs)
+})
 ```
 
 # api
