@@ -59,13 +59,7 @@ Obs.prototype.open = function (obsid) {
   var cursor = hprefix(String(obsid))
   cursor.id = obsid
 
-  var finalize = []
-  cursor.finalize = function (cb) { finalize.push(cb) }
-
   this._getArchive(function (archive) {
-    finalize.forEach(function (cb) { archive.finalize(cb) })
-    finalize = null
-    cursor.finalize = function (cb) { archive.finalize(cb) }
     cursor.setArchive(archive)
   })
   return cursor
