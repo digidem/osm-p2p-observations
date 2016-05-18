@@ -40,7 +40,7 @@ osm.create(doc, function (err, key, node) {
 
 ```
 $ node create-event.js -147.9 64.5 'oil spill'
-2549835612660169035
+5025029157861247926
 ```
 
 ---
@@ -77,21 +77,19 @@ var doc = {
 fs.createReadStream(argv.media)
   .pipe(cursor.createFileWriteStream(argv.media))
 
-cursor.finalize(function () {
-  osm.create(doc, function (err, key, node) {
-    if (err) console.error(err)
-    else console.log(cursor.id)
-  })
+osm.create(doc, function (err, key, node) {
+  if (err) console.error(err)
+  else console.log(cursor.id)
 })
 ```
 
 ```
-$ node create-obs.js 2549835612660169035 --caption='oil in the river' \
+$ node create-obs.js 5025029157861247926 --caption='oil in the river' \
   --category=contamination --media=DSC_102932.jpg --mediaType=photo
-3816383091836550097
-$ node create-obs.js 2549835612660169035 --caption='pipeline break' \
+17033495527276810754
+$ node create-obs.js 5025029157861247926 --caption='pipeline break' \
   --category=contamination --media=DSC_102931.jpg --mediaType=photo
-7719235301294729118
+3645369582472120028
 ```
 
 ---
@@ -110,6 +108,24 @@ var obs = obsdb({ db: db, log: osm.log })
 obs.list(process.argv[2], function (err, docs) {
   console.log(docs)
 })
+```
+
+```
+$ node list.js 5025029157861247926
+[ { type: 'observation',
+    id: '3645369582472120028',
+    link: '5025029157861247926',
+    caption: 'pipeline break',
+    category: 'contamination',
+    media: 'DSC_102931.jpg',
+    mediaType: 'photo' },
+  { type: 'observation',
+    id: '17033495527276810754',
+    link: '5025029157861247926',
+    caption: 'oil in the river',
+    category: 'contamination',
+    media: 'DSC_102932.jpg',
+    mediaType: 'photo' } ]
 ```
 
 ---
