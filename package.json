@@ -1,6 +1,6 @@
 {
   "name": "osm-p2p-observations",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "media layer to record monitoring observations for osm-p2p",
   "main": "index.js",
   "dependencies": {
