@@ -34,16 +34,14 @@ function Obs (opts) {
   self.db.get('link', function (err, link) {
     if (err && !notfound(err)) return self.emit('error', err)
     else if (link) {
-      self.link = link
+      self.link = Buffer(link, 'hex')
       return self.emit('link', link)
     }
-    var archive = self.drive.createArchive()
-    archive.finalize(function () {
-      self.db.put('link', archive.key, function (err) {
-        if (err) return self.emit('error')
-        self.link = archive.key
-        self.emit('link', archive.key)
-      })
+    var archive = self.drive.createArchive(undefined, { live: true })
+    self.db.put('link', archive.key.toString('hex'), function (err) {
+      if (err) return self.emit('error')
+      self.link = archive.key
+      self.emit('link', archive.key)
     })
   })
 }
@@ -51,7 +49,9 @@ function Obs (opts) {
 Obs.prototype._getArchive = function (fn) {
   if (this.link) onlink.call(this, this.link)
   else this.once('link', onlink)
-  function onlink (link) { fn(this.drive.createArchive(link)) }
+  function onlink (link) {
+    fn(this.drive.createArchive(link, { live: true }))
+  }
 }
 
 Obs.prototype.open = function (obsid) {
