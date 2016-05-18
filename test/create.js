@@ -17,6 +17,7 @@ test('create', function (t) {
   var obs = OBS({ db: memdb(), log: osm.log })
   var eventKey
   var obsdocs = []
+  var pending = 6
 
   var evdoc = {
     type: 'node',
@@ -31,69 +32,67 @@ test('create', function (t) {
   osm.create(evdoc, function (err, key, node) {
     t.error(err)
     eventKey = key
-    var pending = 3
     var c0 = obs.open()
     fs.createReadStream(dir('DSC_102931.jpg'))
       .pipe(c0.createFileWriteStream('DSC_102931.jpg'))
-    c0.finalize(function () {
-      var doc = {
-        type: 'observation',
-        id: c0.id,
-        link: key,
-        caption: 'pipeline break',
-        category: 'contamination',
-        media: 'DSC_102931.jpg',
-        mediaType: 'photo'
-      }
-      obsdocs.push(doc)
-      osm.create(doc, function (err, xkey, xnode) {
-        t.error(err)
-        if (--pending === 0) done()
-      })
+      .once('finish', done)
+
+    var doc = {
+      type: 'observation',
+      id: c0.id,
+      link: key,
+      caption: 'pipeline break',
+      category: 'contamination',
+      media: 'DSC_102931.jpg',
+      mediaType: 'photo'
+    }
+    obsdocs.push(doc)
+    osm.create(doc, function (err, xkey, xnode) {
+      t.error(err)
+      done()
     })
 
     var c1 = obs.open()
     fs.createReadStream(dir('DSC_102932.jpg'))
       .pipe(c1.createFileWriteStream('DSC_102932.jpg'))
-    c1.finalize(function () {
-      var doc = {
-        type: 'observation',
-        id: c1.id,
-        link: key,
-        caption: 'oil in the river',
-        category: 'contamination',
-        media: 'DSC_102932.jpg',
-        mediaType: 'photo'
-      }
-      obsdocs.push(doc)
-      osm.create(doc, function (err, xkey, xnode) {
-        t.error(err)
-        if (--pending === 0) done()
-      })
+      .once('finish', done)
+    var doc = {
+      type: 'observation',
+      id: c1.id,
+      link: key,
+      caption: 'oil in the river',
+      category: 'contamination',
+      media: 'DSC_102932.jpg',
+      mediaType: 'photo'
+    }
+    obsdocs.push(doc)
+    osm.create(doc, function (err, xkey, xnode) {
+      t.error(err)
+      done()
     })
 
     var c2 = obs.open()
     fs.createReadStream(dir('audiofile1.wav'))
       .pipe(c2.createFileWriteStream('audiofile1.wav'))
-    c2.finalize(function () {
-      var doc = {
-        type: 'observation',
-        id: c2.id,
-        link: key,
-        caption: 'interview with uncle simon',
-        category: 'testimony',
-        media: 'audiofile1.wav',
-        mediaType: 'audio'
-      }
-      obsdocs.push(doc)
-      osm.create(doc, function (err, xkey, xnode) {
-        t.error(err)
-        if (--pending === 0) done()
-      })
+      .once('finish', done)
+    var doc = {
+      type: 'observation',
+      id: c2.id,
+      link: key,
+      caption: 'interview with uncle simon',
+      category: 'testimony',
+      media: 'audiofile1.wav',
+      mediaType: 'audio'
+    }
+    obsdocs.push(doc)
+    osm.create(doc, function (err, xkey, xnode) {
+      t.error(err)
+      done()
     })
   })
 
   function done () {
+    if (--pending !== 0) return
     obs.list(eventKey, function (err, keys) {
       t.error(err)
       t.deepEqual(keys.sort(cmp), obsdocs.sort(cmp), 'expected observations')
