@@ -19,9 +19,14 @@ test('create', function (t) {
   var obsdocs = []
 
   var evdoc = {
-    type: 'event',
-    category: 'oil spill',
-    date: '2016-05-30'
+    type: 'node',
+    lon: 12.3,
+    lat: 45.6,
+    tags: {
+      type: 'event',
+      category: 'oil spill',
+      date: '2016-05-30'
+    }
   }
   osm.create(evdoc, function (err, key, node) {
     t.error(err)
