@@ -25,9 +25,11 @@ var doc = {
 }
 
 fs.createReadStream(argv.media)
-  .pipe(cursor.createFileWriteStream(argv.media))
+  .pipe(cursor.createFileWriteStream(doc.media))
+  .once('finish', function () {
+    osm.create(doc, function (err, key, node) {
+      if (err) console.error(err)
+      else console.log(cursor.id)
+    })
+  })
 
-osm.create(doc, function (err, key, node) {
-  if (err) console.error(err)
-  else console.log(cursor.id)
-})

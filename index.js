@@ -35,7 +35,7 @@ function Obs (opts) {
     if (err && !notfound(err)) return self.emit('error', err)
     else if (link) {
       self.link = Buffer(link, 'hex')
-      return self.emit('link', link)
+      return self.emit('link', self.link)
     }
     var archive = self.drive.createArchive(undefined, { live: true })
     self.db.put('link', archive.key.toString('hex'), function (err) {
