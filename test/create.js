@@ -35,7 +35,10 @@ test('create', function (t) {
     var c0 = obs.open()
     fs.createReadStream(dir('DSC_102931.jpg'))
       .pipe(c0.createFileWriteStream('DSC_102931.jpg'))
-      .once('finish', done)
+      .once('finish', function () {
+        console.log('FINISH')
+        done()
+      })
 
     var doc = {
       type: 'observation',
