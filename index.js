@@ -38,6 +38,7 @@ function Obs (opts) {
       return self.emit('link', link)
     }
     var archive = self.drive.createArchive(undefined, { live: true })
+    self.archive = archive
     self.db.put('link', archive.key.toString('hex'), function (err) {
       if (err) return self.emit('error')
       self.link = archive.key
@@ -50,7 +51,9 @@ Obs.prototype._getArchive = function (fn) {
   if (this.link) onlink.call(this, this.link)
   else this.once('link', onlink)
   function onlink (link) {
-    fn(this.drive.createArchive(link, { live: true }))
+    if (this.archive) return fn(this.archive)
+    this.archive = this.drive.createArchive(link, { live: true })
+    fn(this.archive)
   }
 }
 
