@@ -39,7 +39,7 @@ function Obs (opts) {
     }
     var archive = self.drive.createArchive(undefined, { live: true })
     self.archive = archive
-    self.db.put('link', archive.key.toString('hex'), function (err) {
+    self.db.put('link', archive.key, function (err) {
       if (err) return self.emit('error')
       self.link = archive.key
       self.emit('link', archive.key)
