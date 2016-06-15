@@ -1,3 +1,6 @@
+[![Build Status](https://img.shields.io/travis/digidem/osm-p2p-observations.svg)](https://travis-ci.org/digidem/osm-p2p-observations)
+[![npm](https://img.shields.io/npm/v/osm-p2p-observations.svg?maxAge=2592000)](https://www.npmjs.com/package/osm-p2p-observations)
+
 # osm-p2p-observations
 
 media layer to record monitoring observations for [osm-p2p][1]
