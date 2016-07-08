@@ -34,12 +34,12 @@ function Obs (opts) {
   self.db.get('link', function (err, link) {
     if (err && !notfound(err)) return self.emit('error', err)
     else if (link) {
-      self.link = Buffer(link, 'hex')
+      self.link = link
       return self.emit('link', self.link)
     }
     var archive = self.drive.createArchive(undefined, { live: true })
     self.archive = archive
-    self.db.put('link', archive.key.toString('hex'), function (err) {
+    self.db.put('link', archive.key, function (err) {
       if (err) return self.emit('error')
       self.link = archive.key
       self.emit('link', archive.key)
