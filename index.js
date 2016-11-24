@@ -1,7 +1,5 @@
 var join = require('hyperlog-join')
 var sub = require('subleveldown')
-var hprefix = require('hyperdrive-prefix')
-var hyperdrive = require('hyperdrive')
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
 var hex2dec = require('./lib/hex2dec.js')
@@ -13,7 +11,7 @@ var readonly = require('read-only-stream')
 module.exports = Obs
 inherits(Obs, EventEmitter)
 
-var REF = 'r', DRIVE = 'd', INFO = 'i'
+var REF = 'r', INFO = 'i'
 
 function Obs (opts) {
   var self = this
@@ -29,44 +27,7 @@ function Obs (opts) {
       return { type: 'put', key: v.link, value: 0 }
     }
   })
-  self.drive = hyperdrive(sub(opts.db, DRIVE))
   self.db = sub(opts.db, INFO, { valueEncoding: 'binary' })
-  self.db.get('link', function (err, link) {
-    if (err && !notfound(err)) return self.emit('error', err)
-    else if (link) {
-      self.link = Buffer(link, 'hex')
-      return self.emit('link', self.link)
-    }
-    var archive = self.drive.createArchive(undefined, { live: true })
-    self.archive = archive
-    self.db.put('link', archive.key.toString('hex'), function (err) {
-      if (err) return self.emit('error')
-      self.link = archive.key
-      self.emit('link', archive.key)
-    })
-  })
-}
-
-Obs.prototype._getArchive = function (fn) {
-  if (this.link) onlink.call(this, this.link)
-  else this.once('link', onlink)
-  function onlink (link) {
-    if (this.archive) return fn(this.archive)
-    this.archive = this.drive.createArchive(link, { live: true })
-    fn(this.archive)
-  }
-}
-
-Obs.prototype.open = function (obsid) {
-  if (!obsid) obsid = hex2dec(randombytes(8).toString('hex'))
-  var cursor = hprefix(String(obsid))
-  cursor.id = obsid
-  cursor.finalize = function (cb) { cb() }
-
-  this._getArchive(function (archive) {
-    cursor.setArchive(archive)
-  })
-  return cursor
 }
 
 Obs.prototype.list = function (refid, cb) {
@@ -83,15 +44,4 @@ Obs.prototype.list = function (refid, cb) {
   r.pipe(tr)
   if (cb) collect(tr, cb)
   return readonly(tr)
-}
-
-Obs.prototype.replicate = function (opts) {
-  return symgroup({
-    drive: this.drive.replicate(opts)
-  })
-}
-
-function noop () {}
-function notfound (err) {
-  return err && (/^notfound/i.test(err.message) || err.notFound)
 }
