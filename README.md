@@ -15,46 +15,11 @@ incrementing the major version for each update.
 
 # example
 
-create an event:
+create documents with `osm.create()`:
 
 ``` js
 var osmdb = require('osm-p2p')
-var level = require('level')
-var strftime = require('strftime')
-
-var db = level('/tmp/osm-obs.db')
-var osm = osmdb('/tmp/osm.db')
-
-var doc = {
-  type: 'node',
-  lon: Number(process.argv[2]),
-  lat: Number(process.argv[3]),
-  tags: {
-    category: process.argv[4],
-    date: strftime('%F', new Date),
-    type: 'event'
-  }
-}
-osm.create(doc, function (err, key, node) {
-  if (err) console.error(err)
-  else console.log(key)
-})
-```
-
-```
-$ node create-event.js -147.9 64.5 'oil spill'
-5025029157861247926
-```
-
----
-
-create observations that link to the event:
-
-``` js
-var osmdb = require('osm-p2p')
-var obsdb = require('osm-p2p-observation')
-var fs = require('fs')
-var path = require('path')
+var obsdb = require('osm-p2p-observations')
 var minimist = require('minimist')
 
 var level = require('level')
@@ -63,41 +28,37 @@ var db = level('/tmp/osm-obs.db')
 var osm = osmdb('/tmp/osm.db')
 var obs = obsdb({ db: db, log: osm.log })
 
-var argv = minimist(process.argv.slice(2), { string: [ '_' ] })
-
-var evkey = argv._[0]
-var cursor = obs.open()
-var doc = {
-  type: 'observation',
-  id: cursor.id,
-  link: evkey,
-  caption: argv.caption,
-  category: argv.category,
-  media: path.basename(argv.media),
-  mediaType: argv.mediaType
-}
-
-fs.createReadStream(argv.media)
-  .pipe(cursor.createFileWriteStream(argv.media))
+var doc = minimist(process.argv.slice(2), {
+  string: ['obs','link']
+})
+delete doc._
 
 osm.create(doc, function (err, key, node) {
   if (err) console.error(err)
-  else console.log(cursor.id)
+  else console.log(key)
 })
 ```
 
-```
-$ node create-obs.js 5025029157861247926 --caption='oil in the river' \
-  --category=contamination --media=DSC_102932.jpg --mediaType=photo
-17033495527276810754
-$ node create-obs.js 5025029157861247926 --caption='pipeline break' \
-  --category=contamination --media=DSC_102931.jpg --mediaType=photo
-3645369582472120028
+Create normal osm-p2p types plus `'observation'` to record events and
+`'observation-link'` to link observations with other osm-p2p types:
+
+``` sh
+$ node create.js --type=observation --lon=-147.93 --lat=64.51 \
+  --caption='oil in the river' --category=contamination \
+  --media=2016-12-02_15h24_63ec3720a6a5f.jpg
+13932038153867622787
+$ node create.js --type=observation --lon=-149.95 --lat=64.49 \
+  --caption='pipeline break' --category=contamination \
+  --media=2016-12-02_15h51_d57362a9a06e7.jpg
+313578825992369305
+$ node create.js --type=node --lon=-147.92 --lat=64.51
+10510648254103783027
+$ node create.js --type=observation-link \
+  --link=10510648254103783027 --obs=13932038153867622787
+4117990465324480637
 ```
 
----
-
-list the observations associated with an event:
+Now you can list which documents are linked to each other with `obs.link()`:
 
 ``` js
 var osmdb = require('osm-p2p')
@@ -108,65 +69,36 @@ var db = level('/tmp/osm-obs.db')
 var osm = osmdb('/tmp/osm.db')
 var obs = obsdb({ db: db, log: osm.log })
 
-obs.list(process.argv[2], function (err, docs) {
+obs.links(process.argv[2], function (err, docs) {
   console.log(docs)
 })
 ```
 
+You can query by either the linked document id or the observation id:
+
+``` sh
+$ node links.js 13932038153867622787
+[ { key: '4117990465324480637',
+    value: 
+     { type: 'observation-link',
+       link: '10510648254103783027',
+       obs: '13932038153867622787' } } ]
+$ node links.js 10510648254103783027
+[ { key: '4117990465324480637',
+    value: 
+     { type: 'observation-link',
+       link: '10510648254103783027',
+       obs: '13932038153867622787' } } ]
 ```
-$ node list.js 5025029157861247926
-[ { type: 'observation',
-    id: '3645369582472120028',
-    link: '5025029157861247926',
-    caption: 'pipeline break',
-    category: 'contamination',
-    media: 'DSC_102931.jpg',
-    mediaType: 'photo' },
-  { type: 'observation',
-    id: '17033495527276810754',
-    link: '5025029157861247926',
-    caption: 'oil in the river',
-    category: 'contamination',
-    media: 'DSC_102932.jpg',
-    mediaType: 'photo' } ]
-```
 
----
+Some documents won't be linked to anything:
 
-list the media files attached to an observation:
-
-``` js
-var osmdb = require('osm-p2p')
-var obsdb = require('osm-p2p-observations')
-var level = require('level')
-var db = level('/tmp/osm-obs.db')
-
-var osm = osmdb('/tmp/osm.db')
-var obs = obsdb({ db: db, log: osm.log })
-
-var archive = obs.open(process.argv[2])
-archive.list().on('data', function (entry) {
-  console.log(entry.name)
-})
+``` sh
+$ node links.js 313578825992369305
+[]
 ```
 
 ---
-
-read the file contents of a media file from an observation:
-
-```
-var osmdb = require('osm-p2p')
-var obsdb = require('osm-p2p-observations')
-var level = require('level')
-var db = level('/tmp/osm-obs.db')
-
-var osm = osmdb('/tmp/osm.db')
-var obs = obsdb({ db: db, log: osm.log })
-
-var archive = obs.open(process.argv[2])
-archive.createFileReadStream(process.argv[3])
-  .pipe(process.stdout)
-```
 
 # api
 
@@ -181,21 +113,13 @@ Create an `obs` instance from:
 * `opts.log` - a hyperlog instance from an osm-p2p-db
 * `opts.db` - a leveldb database
 
-## var archive = obs.open(obsid)
+## var stream = obs.links(id, cb)
 
-Open a [hyperdrive][2] `archive`, optionally with an `obsid`.
-Otherwise, an `obsid` is generated and can be read as `archive.id`.
+Return a readable `stream` of observation-link documents that link to `id`.
 
-[2]: https://npmjs.com/package/hyperdrive
+If `cb` is given, collect the documents into `cb(err, docs)`.
 
-## var stream = obs.list(evkey, cb)
-
-Return a readable `stream` of documents that link to `evkey` or collect the
-documents into `cb(err, docs)`.
-
-## var stream = obs.replicate()
-
-Return a duplex `stream` for replication.
+`id` can be an osm document id or an observation id.
 
 # install
 
