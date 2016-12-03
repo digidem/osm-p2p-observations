@@ -9,7 +9,7 @@ var osm = osmdb('/tmp/osm.db')
 var obs = obsdb({ db: db, log: osm.log })
 
 var doc = minimist(process.argv.slice(2), {
-  string: ['obsid','osmid']
+  string: ['obs','link']
 })
 delete doc._
 

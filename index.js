@@ -24,10 +24,9 @@ function Obs (opts) {
     map: function (row) {
       var v = row.value && row.value.v || {}
       if (v.type === 'observation-link') {
-        console.error(v)
         return [
-          { type: 'put', key: v.obsid, value: 0 },
-          { type: 'put', key: v.osmid, value: 0 }
+          { type: 'put', key: v.obs, value: 0 },
+          { type: 'put', key: v.link, value: 0 }
         ]
       }
     }
@@ -42,7 +41,7 @@ Obs.prototype.links = function (id, cb) {
     self.log.get(row.key, function (err, doc) {
       if (err) next(err)
       else if (!doc || !doc.value || !doc.value.v) next()
-      else next(null, doc.value.v)
+      else next(null, { key: doc.value.k, value: doc.value.v })
     })
   })
   r.once('error', tr.emit.bind(tr, 'error'))

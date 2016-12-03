@@ -4,6 +4,7 @@ var osmdb = require('osm-p2p')
 var fs = require('fs')
 var path = require('path')
 var memdb = require('memdb')
+var collect = require('collect-stream')
 var OBS = require('../')
 
 var tmpdir = path.join(require('os').tmpdir(), 'osm-obs-' + Math.random())
@@ -12,94 +13,94 @@ mkdirp.sync(tmpdir)
 function dir (x) { return path.join(__dirname, 'files', x) }
 
 test('create', function (t) {
-  t.plan(6)
+  t.plan(7)
   var osm = osmdb(tmpdir)
   var obs = OBS({ db: memdb(), log: osm.log })
-  var eventKey
-  var obsdocs = []
-  var pending = 6
 
-  var evdoc = {
-    type: 'node',
-    lon: 12.3,
-    lat: 45.6,
-    tags: {
-      type: 'event',
-      category: 'oil spill',
-      date: '2016-05-30'
+  var docs = [
+    {
+      type: 'put',
+      key: '5376464111285135',
+      value: {
+        type: 'observation',
+        lon: -147.93,
+        lat: 64.51,
+        caption: 'oil in the river',
+        category: 'contamination',
+        media: '2016-12-02_15h24_63ec3720a6a5f.jpg'
+      }
+    },
+    {
+      type: 'put',
+      key: '3698308318298018',
+      value: {
+        type: 'observation',
+        lon: -149.95,
+        lat: 64.49,
+        caption: 'pipeline break',
+        category: 'contamination',
+        media: '2016-12-02_15h51_d57362a9a06e7.jpg'
+      }
+    },
+    {
+      type: 'put',
+      key: '7188637216252609',
+      value: {
+        type: 'node',
+        lon: -147.92,
+        lat: 64.51
+      }
+    },
+    {
+      type: 'put',
+      value: {
+        type: 'observation-link',
+        link: '7188637216252609',
+        obs: '3698308318298018'
+      }
     }
-  }
-  osm.create(evdoc, function (err, key, node) {
+  ]
+  osm.batch(docs, function (err, nodes) {
     t.error(err)
-    eventKey = key
-    var c0 = obs.open()
-    fs.createReadStream(dir('DSC_102931.jpg'))
-      .pipe(c0.createFileWriteStream('DSC_102931.jpg'))
-      .once('finish', function () {
-        console.log('FINISH')
-        done()
-      })
-
-    var doc = {
-      type: 'observation',
-      id: c0.id,
-      link: key,
-      caption: 'pipeline break',
-      category: 'contamination',
-      media: 'DSC_102931.jpg',
-      mediaType: 'photo'
-    }
-    obsdocs.push(doc)
-    osm.create(doc, function (err, xkey, xnode) {
+    obs.links('3698308318298018', function (err, docs) {
       t.error(err)
-      done()
+      t.deepEqual(docs.map(valueof), [
+        {
+          type: 'observation-link',
+          link: '7188637216252609',
+          obs: '3698308318298018'
+        }
+      ])
     })
-
-    var c1 = obs.open()
-    fs.createReadStream(dir('DSC_102932.jpg'))
-      .pipe(c1.createFileWriteStream('DSC_102932.jpg'))
-      .once('finish', done)
-    var doc = {
-      type: 'observation',
-      id: c1.id,
-      link: key,
-      caption: 'oil in the river',
-      category: 'contamination',
-      media: 'DSC_102932.jpg',
-      mediaType: 'photo'
-    }
-    obsdocs.push(doc)
-    osm.create(doc, function (err, xkey, xnode) {
+    obs.links('5376464111285135', function (err, docs) {
       t.error(err)
-      done()
+      t.deepEqual(docs, [])
     })
-
-    var c2 = obs.open()
-    fs.createReadStream(dir('audiofile1.wav'))
-      .pipe(c2.createFileWriteStream('audiofile1.wav'))
-      .once('finish', done)
-    var doc = {
-      type: 'observation',
-      id: c2.id,
-      link: key,
-      caption: 'interview with uncle simon',
-      category: 'testimony',
-      media: 'audiofile1.wav',
-      mediaType: 'audio'
-    }
-    obsdocs.push(doc)
-    osm.create(doc, function (err, xkey, xnode) {
+    collect(osm.log.createReadStream(), function (err, docs) {
       t.error(err)
-      done()
+      t.deepEqual(docs.map(valueof).map(vprop).filter(isobs).sort(cmp), [
+        {
+          type: 'observation',
+          lon: -147.93,
+          lat: 64.51,
+          caption: 'oil in the river',
+          category: 'contamination',
+          media: '2016-12-02_15h24_63ec3720a6a5f.jpg'
+        },
+        {
+          type: 'observation',
+          lon: -149.95,
+          lat: 64.49,
+          caption: 'pipeline break',
+          category: 'contamination',
+          media: '2016-12-02_15h51_d57362a9a06e7.jpg'
+        }
+      ].sort(cmp))
     })
   })
-
-  function done () {
-    if (--pending !== 0) return
-    obs.list(eventKey, function (err, keys) {
-      t.error(err)
-      t.deepEqual(keys.sort(cmp), obsdocs.sort(cmp), 'expected observations')
-    })
-  }
-  function cmp (a, b) { return a.id < b.id ? -1 : 1 }
 })
+
+function cmp (a, b) { return a.id < b.id ? -1 : 1 }
+function isobs (doc) { return doc.type === 'observation' }
+function valueof (doc) { return doc.value }
+function vprop (doc) { return doc.v }
