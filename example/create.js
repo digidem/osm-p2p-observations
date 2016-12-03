@@ -8,7 +8,9 @@ var db = level('/tmp/osm-obs.db')
 var osm = osmdb('/tmp/osm.db')
 var obs = obsdb({ db: db, log: osm.log })
 
-var doc = minimist(process.argv.slice(2))
+var doc = minimist(process.argv.slice(2), {
+  string: ['obsid','osmid']
+})
 delete doc._
 
 osm.create(doc, function (err, key, node) {

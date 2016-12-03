@@ -10,7 +10,7 @@ var xtend = require('xtend')
 module.exports = Obs
 inherits(Obs, EventEmitter)
 
-var REF = 'r', INFO = 'i'
+var REF = 'r'
 
 function Obs (opts) {
   var self = this
@@ -20,30 +20,26 @@ function Obs (opts) {
   self.log.on('error', function (err) { self.emit('error', err) })
   self.indexes.ref = join({
     log: self.log,
-    db: sub(opts.db, REF),
+    db: sub(opts.db, REF, { valueEncoding: 'json' }),
     map: function (row) {
       var v = row.value && row.value.v || {}
-      if (v.type === 'observation-link' && v.link) {
-        return { type: 'put', key: v.osmid, value: 0 }
+      if (v.type === 'observation-link') {
+        console.error(v)
+        return [
+          { type: 'put', key: v.obsid, value: 0 },
+          { type: 'put', key: v.osmid, value: 0 }
+        ]
       }
     }
   })
   self.indexes.ref.on('error', function (err) { self.emit('error', err) })
-  self.db = sub(opts.db, INFO, { valueEncoding: 'binary' })
 }
 
-Obs.prototype.list = function (cb) {
+Obs.prototype.links = function (id, cb) {
   var self = this
-  var r = self.indexes.ref.relations()
-  if (cb) collect(r, cb)
-  return r
-}
-
-Obs.prototype.links = function (refid, cb) {
-  var self = this
-  var r = self.indexes.ref.list(refid)
+  var r = self.indexes.ref.list(id)
   var tr = through.obj(function (row, enc, next) {
-    self.log.get(row.value.obsid, function (err, doc) {
+    self.log.get(row.key, function (err, doc) {
       if (err) next(err)
       else if (!doc || !doc.value || !doc.value.v) next()
       else next(null, doc.value.v)
