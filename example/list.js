@@ -6,6 +6,6 @@ var db = level('/tmp/osm-obs.db')
 var osm = osmdb('/tmp/osm.db')
 var obs = obsdb({ db: db, log: osm.log })
 
-obs.list(process.argv[2], function (err, docs) {
+obs.list(function (err, docs) {
   console.log(docs)
 })
