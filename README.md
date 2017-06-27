@@ -129,12 +129,17 @@ If `cb` is given, collect the documents into `cb(err, docs)`.
 
 `id` can be an OSM document ID or an observation ID.
 
-# install
+### obs.ready(cb)
+
+Calls the callback function `done` exactly once, when the indexer has finished
+indexing all documents in `osmdb`.
+
+# Install
 
 ```
 npm install osm-p2p-observations
 ```
 
-# license
+# License
 
 MIT

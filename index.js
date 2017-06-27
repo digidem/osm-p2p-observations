@@ -49,3 +49,7 @@ Obs.prototype.links = function (id, cb) {
   if (cb) collect(tr, cb)
   return readonly(tr)
 }
+
+Obs.prototype.ready = function (cb) {
+  this.indexes.ref.dex.ready(cb)
+}
