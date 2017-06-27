@@ -1,6 +1,6 @@
 {
   "name": "osm-p2p-observations",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Indexing layer to record monitoring observations for osm-p2p-db.",
   "main": "index.js",
   "dependencies": {
