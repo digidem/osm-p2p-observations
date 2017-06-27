@@ -1,20 +1,14 @@
 var test = require('tape')
-var mkdirp = require('mkdirp')
-var osmdb = require('osm-p2p')
-var fs = require('fs')
-var path = require('path')
+var osmdb = require('osm-p2p-mem')
 var memdb = require('memdb')
 var collect = require('collect-stream')
 var OBS = require('../')
-
-var tmpdir = path.join(require('os').tmpdir(), 'osm-obs-' + Math.random())
-mkdirp.sync(tmpdir)
 
 function dir (x) { return path.join(__dirname, 'files', x) }
 
 test('create', function (t) {
   t.plan(7)
-  var osm = osmdb(tmpdir)
+  var osm = osmdb()
   var obs = OBS({ db: memdb(), log: osm.log })
 
   var docs = [
