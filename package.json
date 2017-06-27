@@ -1,7 +1,7 @@
 {
   "name": "osm-p2p-observations",
   "version": "2.0.0",
-  "description": "media layer to record monitoring observations for osm-p2p",
+  "description": "Indexing layer to record monitoring observations for osm-p2p-db.",
   "main": "index.js",
   "dependencies": {
     "collect-stream": "^1.1.1",

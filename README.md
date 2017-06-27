@@ -3,26 +3,30 @@
 
 # osm-p2p-observations
 
-media layer to record monitoring observations for [osm-p2p][1]
+> Indexing layer to record monitoring observations for [osm-p2p-db][1].
 
-[1]: https://github.com/digidem/osm-p2p
+This layer understands two new document types, `observation` and
+`observation-link`.
 
-# stability
+
+[1]: https://github.com/digidem/osm-p2p-db
+
+# Stability
 
 We're still figuring out the requirements upstream of this API, so we may make
 more breaking changes in the near term, but we will respect semver by
 incrementing the major version for each update.
 
-# example
+# Example
 
-create documents with `osm.create()`:
+Create documents with `osm.create()`:
 
 ``` js
 var osmdb = require('osm-p2p')
 var obsdb = require('osm-p2p-observations')
 var minimist = require('minimist')
-
 var level = require('level')
+
 var db = level('/tmp/osm-obs.db')
 
 var osm = osmdb('/tmp/osm.db')
@@ -98,28 +102,26 @@ $ node links.js 313578825992369305
 []
 ```
 
----
-
-# api
+## API
 
 ``` js
 var obsdb = require('osm-p2p-observations')
 ```
 
-## var obs = obsdb(opts)
+### var obs = obsdb(opts)
 
 Create an `obs` instance from:
 
 * `opts.log` - a hyperlog instance from an osm-p2p-db
 * `opts.db` - a leveldb database
 
-## var stream = obs.links(id, cb)
+### var stream = obs.links(id, cb)
 
-Return a readable `stream` of observation-link documents that link to `id`.
+Return a readable `stream` of `observation-link` documents that link to `id`.
 
 If `cb` is given, collect the documents into `cb(err, docs)`.
 
-`id` can be an osm document id or an observation id.
+`id` can be an OSM document ID or an observation ID.
 
 # install
 
