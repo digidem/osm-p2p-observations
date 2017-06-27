@@ -8,6 +8,12 @@
 This layer understands two new document types, `observation` and
 `observation-link`.
 
+`observation` need only have `lat` and `lon` properties at minimum.
+
+`observation-link` documents require an `obs` property (the OSM ID of the
+observation document) and a `link` property (anything you'd like, but probably
+the OSM ID of the `node` document the observation is linked to).
+
 
 [1]: https://github.com/digidem/osm-p2p-db
 
