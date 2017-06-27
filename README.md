@@ -17,13 +17,13 @@ the OSM ID of the `node` document the observation is linked to).
 
 [1]: https://github.com/digidem/osm-p2p-db
 
-# Stability
+## Stability
 
 We're still figuring out the requirements upstream of this API, so we may make
 more breaking changes in the near term, but we will respect semver by
 incrementing the major version for each update.
 
-# Example
+## Example
 
 Create documents with `osm.create()`:
 
@@ -134,12 +134,12 @@ If `cb` is given, collect the documents into `cb(err, docs)`.
 Calls the callback function `done` exactly once, when the indexer has finished
 indexing all documents in `osmdb`.
 
-# Install
+## Install
 
 ```
 npm install osm-p2p-observations
 ```
 
-# License
+## License
 
 MIT
